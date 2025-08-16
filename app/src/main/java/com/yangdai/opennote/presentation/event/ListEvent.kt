@@ -16,11 +16,12 @@ sealed interface ListEvent {
         val trash: Boolean = false
     ) : ListEvent
 
-    data class DeleteNotes(val noteEntities: Collection<NoteEntity>, val recycle: Boolean) :
-        ListEvent
-
+    data class DeleteNotes(val noteEntities: Collection<NoteEntity>, val recycle: Boolean) : ListEvent
     data class MoveNotes(val noteEntities: Collection<NoteEntity>, val folderId: Long?) : ListEvent
     data class RestoreNotes(val noteEntities: Collection<NoteEntity>) : ListEvent
+
+    //note 添加标签事件
+    data class MarkNotes(val noteEntities: Collection<NoteEntity>, val markNotes: String): ListEvent
 
     data object ToggleOrderSection : ListEvent
     data object ChangeViewMode : ListEvent

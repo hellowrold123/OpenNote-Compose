@@ -27,7 +27,10 @@ data class SettingsState(
     val enumDisplayMode: ListNoteContentDisplayMode = ListNoteContentDisplayMode.RAW,
     val isAutoSaveEnabled: Boolean = false,
     val titleAlignment: Int = 0,
-    val showLineNumbers: Boolean = false
+    val showLineNumbers: Boolean = false,
+    //note 标签相关
+    val isShowTag: Boolean=false,
+    val maxTagCount:Int = 0
 )
 
 

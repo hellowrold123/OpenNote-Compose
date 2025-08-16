@@ -1,14 +1,18 @@
 package com.yangdai.opennote.presentation.component.main
 
 import android.icu.text.DateFormat
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.expandIn
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -148,9 +152,11 @@ fun AdaptiveNoteCard(
     contentTextOverflow: TextOverflow,
     isRaw: Boolean,
     isEditMode: Boolean,
+    isShowTag: Boolean,
     isNoteSelected: Boolean,
     onSelectNote: (NoteEntity) -> Unit,
-    onEditModeChange: (Boolean) -> Unit
+    onEditModeChange: (Boolean) -> Unit,
+    onTagClickable:(String)-> Unit
 ) = Column(modifier) {
     AnimatedVisibility(
         visible = isListView,
@@ -195,5 +201,35 @@ fun AdaptiveNoteCard(
                 isRaw = isRaw
             )
         }
+        if(isShowTag){
+            Row(modifier) {
+                displayedNote.noteMark.split(";").filter { item->item.isNotBlank() }.forEach {
+                        tag->
+                    TagShow(
+                        tag,
+                        { onTagClickable(tag) })
+                }
+            }
+
+        }
     }
+}
+//note 标签相关
+@Composable
+fun TagShow(tag: String,tagClickable:()->Unit){
+    val color = MaterialTheme.colorScheme.primary
+
+    BasicText(
+
+        text = "#"+tag,
+        modifier = Modifier.clickable {
+            Log.i("TagShow: ", tag)
+            tagClickable()
+        }
+            .basicMarquee(animationMode = MarqueeAnimationMode.WhileFocused)
+            .padding(2.dp)
+        ,
+        style = MaterialTheme.typography.bodyMedium,
+        color= ColorProducer{color}
+    )
 }

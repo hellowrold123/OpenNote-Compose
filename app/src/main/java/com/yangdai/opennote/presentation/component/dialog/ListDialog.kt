@@ -50,7 +50,7 @@ fun ListDialog(
     onConfirm: (list: List<String>) -> Unit
 ) {
 
-    val list = remember { mutableStateListOf("") }
+    val list = remember { mutableStateListOf<String>("") }
     var ordered by remember { mutableStateOf(false) }
 
     AlertDialog(

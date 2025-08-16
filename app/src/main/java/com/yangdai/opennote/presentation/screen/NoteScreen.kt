@@ -3,6 +3,7 @@ package com.yangdai.opennote.presentation.screen
 import android.content.ClipData
 import android.content.Intent
 import android.provider.CalendarContract
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
@@ -36,6 +37,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.delete
+import androidx.compose.foundation.text.input.insert
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
@@ -50,6 +53,7 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -111,6 +115,7 @@ import com.yangdai.opennote.presentation.component.dialog.ExportDialog
 import com.yangdai.opennote.presentation.component.dialog.FolderListDialog
 import com.yangdai.opennote.presentation.component.dialog.LinkDialog
 import com.yangdai.opennote.presentation.component.dialog.ListDialog
+import com.yangdai.opennote.presentation.component.dialog.MarkNoteDialog
 import com.yangdai.opennote.presentation.component.dialog.ProgressDialog
 import com.yangdai.opennote.presentation.component.dialog.ShareDialog
 import com.yangdai.opennote.presentation.component.dialog.ShareType
@@ -145,6 +150,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import java.io.File
 import kotlin.math.abs
+import kotlin.toString
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -215,6 +221,9 @@ fun NoteScreen(
     var folderName by rememberSaveable { mutableStateOf("") }
     var timestamp by rememberSaveable { mutableStateOf("") }
     val dateTimeFormatter = rememberDateTimeFormatter()
+
+    //note 标签
+    var isMarkNoteDialogVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(noteState) {
         withContext(Dispatchers.Default) {
@@ -353,6 +362,15 @@ fun NoteScreen(
                     }
                 },
                 actions = {
+                    if (!isReadView)
+                        IconButtonWithTooltip(
+                            imageVector = if (isSearching) Icons.Outlined.Tag
+                            else Icons.Outlined.Tag,
+                            contentDescription = "add tag",
+                            shortCutDescription = "Alt + T"
+                        ) {
+                            isMarkNoteDialogVisible=true
+                        }
                     if (!isReadView)
                         IconButtonWithTooltip(
                             imageVector = if (isSearching) Icons.Outlined.SearchOff
@@ -799,7 +817,10 @@ fun NoteScreen(
                 value = if (noteState.isStandard) stringResource(R.string.standard_mode)
                 else stringResource(R.string.lite_mode)
             )
-
+            NoteSideSheetItem(
+                key = stringResource(R.string.tag_label),
+                value = viewModel.markState.text.toString()
+            )
             NoteSideSheetItem(
                 key = stringResource(R.string.char_count),
                 value = noteTextDetails.charCount.toString()
@@ -873,7 +894,10 @@ fun NoteScreen(
                 saveCurrentNoteAsTemplate = {
                     val noteName = if (viewModel.titleState.text.isBlank()) "Untitled"
                     else viewModel.titleState.text.toString()
-                    val fileName = "$noteName.md"
+                    //note 将标签加入文件名
+                    val tags=viewModel.markState.text.toString();
+                    val fileName = "$noteName[$tags].md"
+
                     val fileContent = viewModel.contentState.text.toString()
                     val rootUri = appSettings.storagePath.toUri()
 
@@ -930,6 +954,7 @@ fun NoteScreen(
                         NoteEntity(
                             title = viewModel.titleState.text.toString(),
                             content = viewModel.contentState.text.toString(),
+                            noteMark = viewModel.markState.text.toString(),
                             timestamp = System.currentTimeMillis()
                         )
                     ), it
@@ -938,7 +963,21 @@ fun NoteScreen(
             showExportDialog = false
         })
     }
-
+    //note 标签相关
+    if (isMarkNoteDialogVisible) {
+        var markNotes =viewModel.markState.text.toString()
+        MarkNoteDialog(
+            markNotes = markNotes,
+            maxTagCount = appSettings.maxTagCount,
+            onDismissRequest = { isMarkNoteDialogVisible = false }) {
+            Log.i("NoteScreen::Tag", it)
+            viewModel.markState.edit{
+                delete(0,viewModel.markState.text.length)
+                insert(0,it)
+            }
+            isMarkNoteDialogVisible = false
+        }
+    }
     if (showShareDialog) {
         val clipboard = LocalClipboard.current
         ShareDialog(
@@ -960,8 +999,10 @@ fun NoteScreen(
                     ShareType.TEXT -> {
                         val sendIntent: Intent = Intent().apply {
                             action = Intent.ACTION_SEND
+                            //note
+                            val tags=viewModel.markState.text.toString()
                             putExtra(
-                                Intent.EXTRA_TITLE, viewModel.titleState.text.toString()
+                                Intent.EXTRA_TITLE, viewModel.titleState.text.toString()+"[$tags]"
                             )
                             putExtra(
                                 Intent.EXTRA_TEXT, viewModel.contentState.text.toString()
@@ -973,8 +1014,11 @@ fun NoteScreen(
                     }
 
                     ShareType.FILE -> {
+                        //note
+                        val tags=viewModel.markState.text.toString();
                         val fileName =
-                            viewModel.titleState.text.toString() + if (noteState.isStandard) ".md" else ".txt"
+                            viewModel.titleState.text.toString()+"[$tags]" + if (noteState.isStandard) ".md" else ".txt"
+
                         val file = File(context.applicationContext.cacheDir, fileName)
                         val fileContent = viewModel.contentState.text.toString()
                         file.writeText(fileContent)

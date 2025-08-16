@@ -1,5 +1,7 @@
 package com.yangdai.opennote.presentation.component.main
 
+import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,6 +18,7 @@ import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,6 +55,8 @@ fun DrawerContent(
     showLock: Boolean,
     selectedDrawerIndex: Int,
     onLockClick: () -> Unit,
+    drawerState: DrawerState,
+    onBackEvent:()-> Unit,
     navigateTo: (Screen) -> Unit,
     onDrawerItemClicked: (Int, FolderEntity) -> Unit
 ) = Column(
@@ -114,6 +119,10 @@ fun DrawerContent(
     LaunchedEffect(folderNoteCounts) {
         isFoldersExpended = folderNoteCounts.isNotEmpty()
     }
+//    BackHandler (drawerState.isOpen){
+//        Log.i("DrawerContent::BackHandler", "back")
+//        onBackEvent()
+//    }
 
     DrawerItem(
         icon = if (!isFoldersExpended) Icons.AutoMirrored.Outlined.KeyboardArrowRight else Icons.Outlined.KeyboardArrowDown,

@@ -6,6 +6,7 @@ object Constants {
     const val MIME_TYPE_TEXT = "text/"
     const val LINK = "https://www.yangdai-opennote.com"
     const val KEY_DESTINATION = "KEY_DESTINATION"
+    const val LANGUAGE_SUPPORT="en,tr,de,zh"
 
     object File {
         const val OPENNOTE = "OpenNote"
@@ -15,7 +16,17 @@ object Constants {
         const val OPENNOTE_AUDIO = "Audio"
         const val OPENNOTE_VIDEOS = "Videos"
     }
+    //note webdav 相关信息
+    object WebDavConfigInfo{
+        const val WEBDAV_URL = "WEBDAV_URL"
+        const val WEBDAV_USERNAME = "WEBDAV_USERNAME"
+        const val WEBDAV_PASSWORD = "WEBDAV_PASSWORD"
+        const val WEBDAV_IS_LOGIN_SUCCESS="WEBDAV_IS_LOGIN_SUCCESS"
 
+        const val WEBDAV_FILE_SUFFIX=".json"
+        const val WEBDAV_FILE_DIRNAME="OpenNote_BACK"
+        const val WEBDAV_FILE_MIMETYPE="application/json"
+    }
     object Preferences {
         const val SEARCH_HISTORY = "SEARCH_HISTORY"
         const val APP_THEME = "APP_THEME"
@@ -43,6 +54,11 @@ object Constants {
         const val IS_AUTO_SAVE_ENABLED = "IS_AUTO_SAVE_ENABLED"
         const val TITLE_ALIGN = "TITLE_ALIGN"
         const val SHOW_LINE_NUMBERS = "LINE_NUMBERS"
+        //note 标签相关
+        const val TAG_SEPARATOR=";"
+        const val MAX_TAG_COUNT = "MAX_TAG_COUNT"
+        const val CLEARSEARXHTECT="[@@borrow**][##state&&][::notify;;]ClearSearchText"
+        const val IS_SHOW_TAG = "IS_SHOW_TAG"
     }
 
     object Widget {
@@ -89,6 +105,14 @@ object Constants {
         const val DIAGRAM = "diagram"
 
         const val TEXT = "text"
+    }
+
+    enum class AlertType(val value: String) {
+        INFO("info"),
+        TIP("tip"),
+        IMPORTANT("important"),
+        WARNING("warning"),
+        CAUTION("caution"),
     }
 }
 

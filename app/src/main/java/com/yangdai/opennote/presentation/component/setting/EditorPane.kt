@@ -1,5 +1,6 @@
 package com.yangdai.opennote.presentation.component.setting
 
+import android.util.Log
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.FormatAlignLeft
 import androidx.compose.material.icons.automirrored.outlined.FormatAlignRight
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.outlined.Discount
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.FormatAlignCenter
 import androidx.compose.material.icons.outlined.FormatListNumbered
@@ -47,6 +49,7 @@ import com.yangdai.opennote.R
 import com.yangdai.opennote.presentation.util.Constants
 import com.yangdai.opennote.presentation.viewmodel.SharedViewModel
 import kotlin.math.roundToInt
+import kotlin.text.toFloat
 
 @Composable
 fun EditorPane(sharedViewModel: SharedViewModel) {
@@ -98,6 +101,45 @@ fun EditorPane(sharedViewModel: SharedViewModel) {
         )
 
         HorizontalDivider()
+
+        //note 设置标签数量
+        var sliderTagPosition by remember { mutableFloatStateOf(settingsState.maxTagCount.toFloat()) }
+        ListItem(
+            leadingContent = {
+                Icon(
+                    imageVector = Icons.Outlined.Discount,
+                    contentDescription = "Font size"
+                )
+            },
+            headlineContent = { Text(text = stringResource(R.string.max_tag_title)) },
+            supportingContent = {
+                Text(
+                    text = stringResource(R.string.max_tag_desc)+":"+ settingsState.maxTagCount
+                )
+            }
+        )
+
+
+
+        Slider(
+            value = settingsState.maxTagCount.toFloat(),
+            onValueChange = {
+                sliderTagPosition = it
+            },
+            onValueChangeFinished = {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                sharedViewModel.putPreferenceValue(
+                    Constants.Preferences.MAX_TAG_COUNT,
+                    sliderTagPosition.roundToInt()
+                )
+            },
+            valueRange = 0f..10f,
+            steps = 9,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp)
+        )
 
         ListItem(
             headlineContent = { Text(text = stringResource(R.string.default_view)) },

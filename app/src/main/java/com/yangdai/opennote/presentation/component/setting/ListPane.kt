@@ -46,6 +46,7 @@ import com.yangdai.opennote.presentation.state.ListNoteContentOverflowStyle.Comp
 import com.yangdai.opennote.presentation.state.ListNoteContentSize
 import com.yangdai.opennote.presentation.state.ListNoteContentSize.Companion.toInt
 import com.yangdai.opennote.presentation.util.Constants
+import com.yangdai.opennote.presentation.util.Constants.Preferences.TAG_SEPARATOR
 import com.yangdai.opennote.presentation.util.rememberDateTimeFormatter
 import com.yangdai.opennote.presentation.viewmodel.SharedViewModel
 
@@ -125,9 +126,11 @@ fun ListPane(sharedViewModel: SharedViewModel) {
                         contentMaxLines = maxLines,
                         contentTextOverflow = textOverflow,
                         isRaw = isRaw,
+                        isShowTag=settingsState.isShowTag,
                         isEditMode = false,
                         isNoteSelected = false,
                         onEditModeChange = { },
+                        onTagClickable = {},
                         onSelectNote = { }
                     )
                 }
@@ -147,7 +150,11 @@ fun ListPane(sharedViewModel: SharedViewModel) {
             stringResource(R.string.compact),
             stringResource(R.string.flat)
         )
-
+        //note 控制标签显示
+        val showTags = listOf(
+            stringResource(R.string.show_tag),
+            stringResource(R.string.hide_tag)
+        )
         AnimatedVisibility(
             !state.isScrollInProgress,
             modifier = Modifier
@@ -191,6 +198,34 @@ fun ListPane(sharedViewModel: SharedViewModel) {
                         )
                     }
                 }
+                //note 操作标签显示
+                SettingsHeader(stringResource(R.string.select_tag_title))
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                ) {
+                    showTags.forEachIndexed { index, label ->
+                        SegmentedButton(
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = showTags.size
+                            ),
+                            onClick = {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                                sharedViewModel.putPreferenceValue(
+                                    Constants.Preferences.IS_SHOW_TAG,
+                                    index==0
+                                )
+                            },
+                            selected = index==if(settingsState.isShowTag) 0 else 1,
+                            label = {
+                                Text(label)
+                            },
+                        )
+                    }
+                }
+
                 SettingsHeader(stringResource(R.string.text_overflow))
                 SingleChoiceSegmentedButtonRow(
                     modifier = Modifier
@@ -274,6 +309,7 @@ private val noteSamples = listOf(
             |- The quick brown fox jumps over the lazy dog.
             |The End.""".trimMargin(),
         isMarkdown = true,
+        noteMark = "随笔"+TAG_SEPARATOR+"灵感",
         timestamp = System.currentTimeMillis()
     ),
     // 笔记标题为空, 中文
@@ -281,6 +317,7 @@ private val noteSamples = listOf(
         title = "",
         content = "这是第二个笔记的示例内容，用来展示当~~笔记标题为空~~时的情况。",
         isMarkdown = true,
+        noteMark = "随笔"+TAG_SEPARATOR+"灵感",
         timestamp = System.currentTimeMillis() - 1000
     ),
     // 笔记isMarkdown为false, 德语
@@ -288,6 +325,7 @@ private val noteSamples = listOf(
         title = "Beispielnotiz 3",
         content = "Dies ist der Inhalt der Beispielnotiz 3. Hier wird getestet, was passiert, wenn isMarkdown auf false gesetzt ist.",
         isMarkdown = false,
+        noteMark = "随笔"+TAG_SEPARATOR+"灵感",
         timestamp = System.currentTimeMillis() - 2000
     ),
     // 笔记内容为空, 土耳其语
@@ -295,6 +333,7 @@ private val noteSamples = listOf(
         title = "Örnek Not 4",
         content = "",
         isMarkdown = true,
+        noteMark = "随笔"+TAG_SEPARATOR+"灵感",
         timestamp = System.currentTimeMillis() - 3000,
     )
 )

@@ -56,7 +56,9 @@ import com.yangdai.opennote.R
 import com.yangdai.opennote.presentation.event.ListEvent
 import com.yangdai.opennote.presentation.util.Constants
 import com.yangdai.opennote.presentation.util.Constants.DEFAULT_MAX_LINES
+import com.yangdai.opennote.presentation.util.Constants.Preferences.CLEARSEARXHTECT
 import com.yangdai.opennote.presentation.viewmodel.SharedViewModel
+import kotlin.text.equals
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,6 +75,9 @@ fun AdaptiveTopSearchbar(
     val historySet by viewModel.historyStateFlow.collectAsStateWithLifecycle()
     val settingsState by viewModel.settingsStateFlow.collectAsStateWithLifecycle()
 
+    //note 直接搜索 清空状态
+    val tagText by viewModel.tagSearchText.collectAsStateWithLifecycle()
+
     var inputText by rememberSaveable {
         mutableStateOf("")
     }
@@ -83,9 +88,6 @@ fun AdaptiveTopSearchbar(
         mutableIntStateOf(DEFAULT_MAX_LINES)
     }
 
-    LaunchedEffect(expanded) {
-        onSearchBarActivationChange(expanded)
-    }
 
     val configuration = LocalConfiguration.current
     val orientation = remember(configuration) { configuration.orientation }
@@ -117,6 +119,26 @@ fun AdaptiveTopSearchbar(
         }
         expanded = false
     }
+    //note 收起时，如果搜索栏没有文本刷新列表
+    LaunchedEffect(expanded) {
+        onSearchBarActivationChange(expanded)
+        if(!expanded&&inputText.isBlank()){
+            search("")
+        }
+    }
+    //note 通过监听状态改变,刷新列表
+    LaunchedEffect(tagText) {
+        if(tagText.equals(CLEARSEARXHTECT)){
+            inputText=""
+            search("")
+        }else if(tagText.isNotEmpty()&&tagText.isNotBlank()){
+            inputText=tagText
+            search(tagText)
+            viewModel.tagSearchText.value=""
+        }
+
+    }
+
 
     AdaptiveSearchBar(
         modifier = modifier,
@@ -127,7 +149,11 @@ fun AdaptiveTopSearchbar(
             SearchBarDefaults.InputField(
                 query = inputText,
                 onQueryChange = { inputText = it },
-                onSearch = { search(it) },
+                onSearch = {
+                    search(it)
+                    //note 修改状态，以确认搜索栏状态有文本
+                    viewModel.tagSearchText.value=it
+                           },
                 enabled = enabled,
                 expanded = expanded,
                 onExpandedChange = { expanded = it },
@@ -233,7 +259,13 @@ fun AdaptiveTopSearchbar(
             historySet.reversed().forEach {
                 SuggestionChip(
                     modifier = Modifier.defaultMinSize(48.dp),
-                    onClick = { inputText = it },
+                    onClick = {
+                        inputText = it
+                        //note 直接搜索
+                        search(it)
+                        viewModel.tagSearchText.value=it
+
+                              },
                     label = {
                         Text(
                             text = it,

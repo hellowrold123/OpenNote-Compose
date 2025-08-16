@@ -10,7 +10,7 @@ import com.yangdai.opennote.data.local.entity.FolderEntity
 import com.yangdai.opennote.data.local.entity.NoteEntity
 
 @Database(
-    version = 2,
+    version = 3,
     entities = [NoteEntity::class, FolderEntity::class]
 )
 abstract class Database : RoomDatabase() {

@@ -135,37 +135,13 @@ fun SettingsListPane(
                     headlineText = stringResource(R.string.editor),
                     supportingText = stringResource(R.string.editor_description)
                 )
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                //note 增加语言界面
+                if (true) {
                     SettingsSectionDivider()
 
                     SettingItem(
                         modifier = Modifier.clickable {
-
-                            try {
-                                val intent = Intent(Settings.ACTION_APP_LOCALE_SETTINGS)
-                                intent.setData(
-                                    Uri.fromParts(
-                                        "package",
-                                        context.packageName,
-                                        null
-                                    )
-                                )
-                                context.startActivity(intent)
-                            } catch (_: Exception) {
-                                try {
-                                    val intent =
-                                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                                    intent.setData(
-                                        Uri.fromParts(
-                                            "package", context.packageName, null
-                                        )
-                                    )
-                                    context.startActivity(intent)
-                                } catch (_: Exception) {
-                                }
-                            }
-
+                            navigateToDetail(SettingsItem(9, R.string.language))
                         },
                         leadingContent = {
                             Icon(

@@ -1,6 +1,7 @@
 package com.yangdai.opennote.presentation.screen
 
 import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.hoverable
@@ -206,7 +207,6 @@ fun LazyGridItemScope.FolderItem(
                 SwipeToDismissBoxValue.EndToStart -> colorScheme.errorContainer
                 SwipeToDismissBoxValue.Settled -> Color.Unspecified
             }
-
             val cornerLeftRadius =
                 if (direction == SwipeToDismissBoxValue.StartToEnd) 16.dp * (progress * 6f) else 0.dp
             val cornerRightRadius =

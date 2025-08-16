@@ -21,5 +21,7 @@ data class NoteEntity(
     val folderId: Long? = null,
     val isMarkdown: Boolean = true,
     val isDeleted: Boolean = false,
-    val timestamp: Long
+    val timestamp: Long,
+    //note 增加标签
+    val noteMark: String =""
 )

@@ -21,7 +21,8 @@ interface NoteDao {
     @Query("SELECT * FROM NOTEENTITY WHERE folderId = :folderId AND isDeleted = 0 ORDER BY timestamp DESC")
     fun getNotesByFolderId(folderId: Long?): Flow<List<NoteEntity>>
 
-    @Query("SELECT * FROM NOTEENTITY WHERE isDeleted = 0 AND (title LIKE '%' || :keyword || '%' OR content LIKE '%' || :keyword || '%') ORDER BY timestamp DESC")
+    //note 修改关键字查询，加入标签
+    @Query("SELECT * FROM NOTEENTITY WHERE isDeleted = 0 AND (title LIKE '%' || :keyword || '%' OR content LIKE '%' || :keyword || '%' OR noteMark LIKE '%' || :keyword || '%') ORDER BY timestamp DESC")
     fun getNotesByKeyWord(keyword: String): Flow<List<NoteEntity>>
 
     @Query(

@@ -128,17 +128,16 @@ fun BaseScreen(
                             && windowSizeClass.windowHeightSizeClass != WindowHeightSizeClass.COMPACT
                 }
             }
-
             val semanticsModifier = if (loggedIn) Modifier else Modifier.clearAndSetSemantics {
                 hideFromAccessibility()
             }
-
             AnimatedNavHost(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.surface)
                     .blur(blur)
-                    .then(semanticsModifier),
+                    .then(semanticsModifier)
+                ,
                 isLargeScreen = isLargeScreen
             )
 

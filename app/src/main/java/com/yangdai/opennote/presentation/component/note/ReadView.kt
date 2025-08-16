@@ -251,7 +251,7 @@ fun ReadView(
                                 when (mediaType) {
                                     "image" -> {
                                         // Check cache first for images
-                                        MediaCache.getImageUri(mediaName)?.let { uri ->
+                                        MediaCache.getImageUri(mediaName)?.let {uri ->
                                             updateImageInWebView(id, uri)
                                             return@launch
                                         }

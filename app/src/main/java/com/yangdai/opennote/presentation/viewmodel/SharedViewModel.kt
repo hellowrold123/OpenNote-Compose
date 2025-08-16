@@ -57,6 +57,7 @@ import com.yangdai.opennote.presentation.state.ListNoteContentSize
 import com.yangdai.opennote.presentation.state.NoteState
 import com.yangdai.opennote.presentation.state.SettingsState
 import com.yangdai.opennote.presentation.state.TextState
+import com.yangdai.opennote.presentation.state.WebDavConfigState
 import com.yangdai.opennote.presentation.util.BackupManager
 import com.yangdai.opennote.presentation.util.Constants
 import com.yangdai.opennote.presentation.util.PARSER
@@ -66,6 +67,7 @@ import com.yangdai.opennote.presentation.util.extension.highlight.HighlightExten
 import com.yangdai.opennote.presentation.util.getFileName
 import com.yangdai.opennote.presentation.util.getOrCreateDirectory
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.ktor.utils.io.core.toByteArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -112,6 +114,7 @@ import org.commonmark.node.AbstractVisitor
 import org.commonmark.node.Heading
 import org.commonmark.parser.Parser
 import org.commonmark.renderer.html.HtmlRenderer
+import java.io.InputStream
 import java.io.OutputStreamWriter
 import javax.inject.Inject
 
@@ -125,6 +128,8 @@ class SharedViewModel @Inject constructor(
     val authenticated = MutableStateFlow(false)
     val isCreatingPassword = MutableStateFlow(false)
     val intent = MutableStateFlow<Intent?>(null)
+    //note 用作标签直接搜索 以及控制搜索栏清空
+    val tagSearchText=MutableStateFlow("")
 
     // 起始页加载状态，初始值为 true
     val isLoading: StateFlow<Boolean>
@@ -166,6 +171,8 @@ class SharedViewModel @Inject constructor(
     val titleState = TextFieldState()
     val contentState = TextFieldState()
     val contentSnapshotFlow = snapshotFlow { contentState.text }
+    //note 标签
+    val markState = TextFieldState()
 
     // Markdown 渲染后的 HTML 内容
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
@@ -253,6 +260,22 @@ class SharedViewModel @Inject constructor(
         }
         getNotes()
     }
+    val webDavConfigStateFlow:StateFlow<WebDavConfigState> = combine<Any, WebDavConfigState>(
+        appDataStoreRepository.stringFlow(Constants.WebDavConfigInfo.WEBDAV_URL),
+        appDataStoreRepository.stringFlow(Constants.WebDavConfigInfo.WEBDAV_USERNAME),
+        appDataStoreRepository.stringFlow(Constants.WebDavConfigInfo.WEBDAV_PASSWORD),
+        appDataStoreRepository.booleanFlow(Constants.WebDavConfigInfo.WEBDAV_IS_LOGIN_SUCCESS),
+    ){values->
+        WebDavConfigState(
+            webDavUrl=values[0] as String,
+            webDavUsername =values[1] as String,
+            webDavPassword =values[2] as String,
+            webDavLoginSuccess = values[3] as Boolean,
+        )
+
+    } .flowOn(Dispatchers.IO).stateIn(
+        scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = WebDavConfigState()
+    )
 
     val settingsStateFlow: StateFlow<SettingsState> = combine<Any, SettingsState>(
         appDataStoreRepository.intFlow(Constants.Preferences.APP_THEME),
@@ -278,7 +301,9 @@ class SharedViewModel @Inject constructor(
         appDataStoreRepository.intFlow(Constants.Preferences.ENUM_DISPLAY_MODE),
         appDataStoreRepository.booleanFlow(Constants.Preferences.IS_AUTO_SAVE_ENABLED),
         appDataStoreRepository.intFlow(Constants.Preferences.TITLE_ALIGN),
-        appDataStoreRepository.booleanFlow(Constants.Preferences.SHOW_LINE_NUMBERS)
+        appDataStoreRepository.booleanFlow(Constants.Preferences.SHOW_LINE_NUMBERS),
+        appDataStoreRepository.booleanFlow(Constants.Preferences.IS_SHOW_TAG),
+        appDataStoreRepository.intFlow(Constants.Preferences.MAX_TAG_COUNT),
     ) { values ->
         SettingsState(
             theme = AppTheme.fromInt(values[0] as Int),
@@ -304,11 +329,46 @@ class SharedViewModel @Inject constructor(
             enumDisplayMode = ListNoteContentDisplayMode.fromInt(values[20] as Int),
             isAutoSaveEnabled = values[21] as Boolean,
             titleAlignment = values[22] as Int,
-            showLineNumbers = values[23] as Boolean
+            showLineNumbers = values[23] as Boolean,
+            //note
+            isShowTag = values[24] as Boolean,
+            maxTagCount = values[25] as Int
         )
     }.flowOn(Dispatchers.IO).stateIn(
         scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = SettingsState()
     )
+    //fixme 粗略
+    suspend fun uploadWebDav(): ByteArray {
+        val notes = useCases.getNotes().first()
+        val folders = useCases.getFolders().first()
+        val backupData = BackupData(notes, folders)
+        val json = Json.encodeToString(backupData)
+        _dataActionState.update { it.copy(progress = 0.4f) }
+        var encryptedJson=encryptBackupData(json)
+        return encryptedJson.toByteArray()
+    }
+    suspend fun downLoadSingleFileWebDav(inputStream: InputStream){
+        val fileJson = inputStream?.bufferedReader()?.readText().orEmpty()
+        runCatching {
+
+            //note 解密获取标识
+            var json = decryptBackupDataWithCompatibility(fileJson)
+            val backupData = Json.decodeFromString<BackupData>(json)
+            _dataActionState.update { it.copy(progress = 0.6f) }
+            backupData.folders.forEach { folderEntity ->
+                useCases.addFolder(folderEntity)
+            }
+            backupData.notes.forEach { noteEntity ->
+                useCases.addNote(noteEntity)
+            }
+        }.onFailure { throwable ->
+            _dataActionState.update {
+                it.copy(message = "Recovery failed: ${throwable.localizedMessage ?: "Unknown error"}")
+            }
+        }.onSuccess {
+            _dataActionState.update { it.copy(progress = 1f) }
+        }
+    }
 
     fun <T> putPreferenceValue(key: String, value: T) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -339,7 +399,25 @@ class SharedViewModel @Inject constructor(
             is ListEvent.Sort -> getNotes(
                 event.noteOrder, event.trash, event.filterFolder, event.folderId
             )
-
+            //note 添加标签
+            is ListEvent.MarkNotes->{
+                viewModelScope.launch(Dispatchers.IO) {
+                    event.noteEntities.forEach {
+                        useCases.updateNote(
+                            NoteEntity(
+                                id = it.id,
+                                title = it.title,
+                                content = it.content,
+                                folderId = it.folderId,
+                                isMarkdown = it.isMarkdown,
+                                isDeleted = it.isDeleted,
+                                noteMark = event.markNotes,
+                                timestamp = it.timestamp
+                            )
+                        )
+                    }
+                }
+            }
             is ListEvent.DeleteNotes -> {
                 viewModelScope.launch(Dispatchers.IO) {
                     if (event.recycle) {
@@ -422,6 +500,7 @@ class SharedViewModel @Inject constructor(
             is ListEvent.OpenOrCreateNote -> {
                 titleState.clearText()
                 contentState.clearText()
+                markState.clearText()
                 // 直接获取点击的note，避免在NoteEvent.Load中再次从数据库加载
                 _oNote = event.noteEntity ?: NoteEntity(
                     folderId = event.folderId,
@@ -508,6 +587,7 @@ class SharedViewModel @Inject constructor(
                             NoteEntity(
                                 id = it,
                                 title = titleState.text.toString(),
+                                noteMark = markState.text.toString(),
                                 content = contentState.text.toString(),
                                 folderId = note.folderId,
                                 isMarkdown = note.isStandard,
@@ -604,6 +684,7 @@ class SharedViewModel @Inject constructor(
                         )
                     }
                     titleState.setTextAndPlaceCursorAtEnd(_oNote.title)
+                    markState.setTextAndPlaceCursorAtEnd(_oNote.noteMark)
                     contentState.setTextAndPlaceCursorAtEnd(_oNote.content)
                 }
             }
@@ -614,13 +695,14 @@ class SharedViewModel @Inject constructor(
                     val note = NoteEntity(
                         id = noteState.id,
                         title = titleState.text.toString(),
+                        noteMark = markState.text.toString(),
                         content = contentState.text.toString(),
                         folderId = noteState.folderId,
                         isMarkdown = noteState.isStandard,
                         timestamp = System.currentTimeMillis()
                     )
                     if (note.id != null) {
-                        if (note.title != _oNote.title || note.content != _oNote.content || note.isMarkdown != _oNote.isMarkdown || note.folderId != _oNote.folderId)
+                        if (note.title != _oNote.title || note.content != _oNote.content || note.isMarkdown != _oNote.isMarkdown || note.folderId != _oNote.folderId||note.noteMark != _oNote.noteMark)
                             useCases.updateNote(note)
                     } else {
                         if (note.title.isNotBlank() || note.content.isNotBlank()) {
@@ -636,6 +718,7 @@ class SharedViewModel @Inject constructor(
     fun shouldShowSnackbar(): Boolean {
         val isNoteChanged = contentState.text.toString() != _oNote.content
                 || titleState.text.toString() != _oNote.title
+                || markState.text.toString() != _oNote.noteMark
                 || noteStateFlow.value.isStandard != _oNote.isMarkdown
                 || noteStateFlow.value.folderId != _oNote.folderId
         val isAutoSaveEnabled =

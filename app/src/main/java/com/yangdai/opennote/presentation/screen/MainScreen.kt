@@ -1,6 +1,8 @@
 package com.yangdai.opennote.presentation.screen
 
 import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -44,6 +46,7 @@ import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.SortByAlpha
+import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material.icons.outlined.ViewAgenda
 import androidx.compose.material3.BottomAppBar
@@ -99,6 +102,7 @@ import com.yangdai.opennote.presentation.component.dialog.ActionType
 import com.yangdai.opennote.presentation.component.dialog.ExportDialog
 import com.yangdai.opennote.presentation.component.dialog.FolderListDialog
 import com.yangdai.opennote.presentation.component.dialog.FullscreenCreateOptionDialog
+import com.yangdai.opennote.presentation.component.dialog.MarkNoteDialog
 import com.yangdai.opennote.presentation.component.dialog.OrderSectionDialog
 import com.yangdai.opennote.presentation.component.dialog.ProgressDialog
 import com.yangdai.opennote.presentation.component.main.AdaptiveNavigationScreen
@@ -113,10 +117,12 @@ import com.yangdai.opennote.presentation.navigation.Screen
 import com.yangdai.opennote.presentation.state.ListNoteContentDisplayMode
 import com.yangdai.opennote.presentation.state.ListNoteContentOverflowStyle
 import com.yangdai.opennote.presentation.state.ListNoteContentSize
+import com.yangdai.opennote.presentation.util.Constants.Preferences.CLEARSEARXHTECT
 import com.yangdai.opennote.presentation.util.SampleNote
 import com.yangdai.opennote.presentation.util.SharedContent
 import com.yangdai.opennote.presentation.util.rememberDateTimeFormatter
 import com.yangdai.opennote.presentation.viewmodel.SharedViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
@@ -164,6 +170,20 @@ fun MainScreen(
         selectedNotesSet = emptySet()
         allNotesSelected = false
     }
+    //note 1.5.0-alpha02 在侧边栏展开时，使用手势返回可能直接退出,不知道怎么解决
+    //note 1.4.0-alpha16 在侧边栏展开时，使用手势返回可能会卡住，加上这个
+    LaunchedEffect(navigationDrawerState.currentValue) {
+        if (navigationDrawerState.currentValue == DrawerValue.Closed) {
+            navigationDrawerState.close()
+        }
+    }
+    //note 消息提示
+    var toastMessage by remember { mutableIntStateOf(0) }
+    ToastPrimary(message = toastMessage)
+    LaunchedEffect(toastMessage) {
+        toastMessage?.let { delay(10) } // 短暂延迟确保Toast显示
+        toastMessage = 0 // 重置状态
+    }
 
     LaunchedEffect(selectedNavDrawerIndex, currentFolder) {
         initializeNoteSelection()
@@ -185,14 +205,35 @@ fun MainScreen(
         else emptySet()
     }
 
-    // Back logic for better user experience
-    BackHandler(isMultiSelectEnabled) {
-        initializeNoteSelection()
+    //note 搜索 返回 相关
+
+    val tagText by viewModel.tagSearchText.collectAsStateWithLifecycle()
+    var isClearSearchText by remember { mutableStateOf(false) }
+    //note 确认搜索栏状态
+    LaunchedEffect(tagText) {
+        if(tagText.equals(CLEARSEARXHTECT)){
+            isClearSearchText=true
+        }else{
+            isClearSearchText=false
+        }
+    }
+    //note 如果是搜索结果，返回时先刷新列表
+    BackHandler(!isClearSearchText||isMultiSelectEnabled) {
+        if(isMultiSelectEnabled){
+            initializeNoteSelection()
+        }
+        else if(!isClearSearchText){
+            viewModel.tagSearchText.value=CLEARSEARXHTECT
+        }
+        Log.i("MainScreen:BackHandler", " back")
     }
 
     var isMoveToFolderDialogVisible by remember { mutableStateOf(false) }
     var isExportNotesDialogVisible by remember { mutableStateOf(false) }
     var isCreateOptionDialogVisible by remember { mutableStateOf(false) }
+
+    //note 控制添加标签弹窗显示
+    var isMarkNoteDialogVisible by remember { mutableStateOf(false) }
 
     AdaptiveNavigationScreen(
         isLargeScreen = isLargeScreen,
@@ -206,6 +247,11 @@ fun MainScreen(
                 onLockClick = {
                     scope.launch { navigationDrawerState.close() }
                     viewModel.authenticated.value = false
+                },
+                //note 拦截返回
+                drawerState = navigationDrawerState,
+                onBackEvent={
+                    scope.launch { navigationDrawerState.close() }
                 },
                 navigateTo = { navigateToScreen(it) }
             ) { index, folderEntity ->
@@ -342,7 +388,20 @@ fun MainScreen(
                         Spacer(Modifier.weight(1f))
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButtonWithTooltip(
+                                imageVector = Icons.Outlined.Tag,
+                                tint = MaterialTheme.colorScheme.primary,
+                                contentDescription = stringResource(id = R.string.add_note),
+                                shortCutDescription = stringResource(id = R.string.add_note)
+                            ) {
+                                //note 展示添加标签弹窗
+                                if (selectedNotesSet.size == 1) {
+                                    isMarkNoteDialogVisible = true
+                                } else {
+                                    toastMessage=R.string.toast_msg2
+                                }
 
+                            }
                             if (selectedNavDrawerIndex == 1) {
                                 IconButtonWithTooltip(
                                     imageVector = Icons.Outlined.RestartAlt,
@@ -362,7 +421,12 @@ fun MainScreen(
                                     contentDescription = stringResource(id = R.string.export),
                                     shortCutDescription = stringResource(id = R.string.export)
                                 ) {
-                                    isExportNotesDialogVisible = true
+                                    //note 判断是否选中
+                                    if (selectedNotesSet.isNotEmpty())
+                                        isExportNotesDialogVisible = true
+                                    else {
+                                        toastMessage = R.string.toast_msg1
+                                    }
                                 }
 
                                 IconButtonWithTooltip(
@@ -371,7 +435,11 @@ fun MainScreen(
                                     contentDescription = stringResource(id = R.string.move),
                                     shortCutDescription = stringResource(id = R.string.move)
                                 ) {
-                                    isMoveToFolderDialogVisible = true
+                                    //note 判断是否选中
+                                    if (selectedNotesSet.isNotEmpty())
+                                        isMoveToFolderDialogVisible = true
+                                    else
+                                        toastMessage = R.string.toast_msg1
                                 }
                             }
 
@@ -381,13 +449,17 @@ fun MainScreen(
                                 contentDescription = stringResource(id = R.string.delete),
                                 shortCutDescription = stringResource(id = R.string.delete)
                             ) {
-                                viewModel.onListEvent(
-                                    ListEvent.DeleteNotes(
-                                        selectedNotesSet,
-                                        selectedNavDrawerIndex != 1
+                                //note 判断是否选中
+                                if (selectedNotesSet.isNotEmpty()) {
+                                    viewModel.onListEvent(
+                                        ListEvent.DeleteNotes(
+                                            selectedNotesSet,
+                                            selectedNavDrawerIndex != 1
+                                        )
                                     )
-                                )
-                                initializeNoteSelection()
+                                    initializeNoteSelection()
+                                } else
+                                    toastMessage = R.string.toast_msg1
                             }
                         }
                     }
@@ -569,8 +641,13 @@ fun MainScreen(
                                 contentTextOverflow = textOverflow,
                                 isRaw = isRaw,
                                 isEditMode = isMultiSelectEnabled,
+                                //note 新增标签相关
+                                isShowTag=settings.isShowTag,
                                 isNoteSelected = selectedNotesSet.contains(note),
                                 onEditModeChange = { isMultiSelectEnabled = it },
+                                onTagClickable = {
+                                    viewModel.tagSearchText.value=it
+                                },
                                 onSelectNote = {
                                     if (isMultiSelectEnabled) {
                                         selectedNotesSet =
@@ -585,6 +662,8 @@ fun MainScreen(
                                                     null
                                                 )
                                             )
+                                            //note 借用tagsearch状态 清空搜索栏
+                                            viewModel.tagSearchText.value=CLEARSEARXHTECT
                                             navigateToScreen(Screen.Note(it.id!!))
                                         } else {
                                             Unit
@@ -699,7 +778,25 @@ fun MainScreen(
             initializeNoteSelection()
         }
     }
+    //note 显示添加标签弹窗
+    if (isMarkNoteDialogVisible) {
+        var markNotes = ""
 
+        selectedNotesSet.forEach { noteEntity -> markNotes = noteEntity.noteMark }
+        MarkNoteDialog(
+            markNotes = markNotes,
+            maxTagCount = settings.maxTagCount,
+            onDismissRequest = { isMarkNoteDialogVisible = false }) {
+            viewModel.onListEvent(
+                ListEvent.MarkNotes(
+                    selectedNotesSet,
+                    it
+                )
+            )
+            initializeNoteSelection()
+            isMarkNoteDialogVisible = false
+        }
+    }
     ProgressDialog(
         isLoading = dataAction.loading,
         progress = dataAction.progress,
@@ -713,6 +810,18 @@ fun MainScreen(
             viewModel.intent.value?.let { handleIntent(it) }
             receivedIntent = true
         }
+    }
+}
+//note 添加toast
+@Composable
+fun ToastPrimary(message: Int) {
+    val context = LocalContext.current
+    LaunchedEffect(message) {
+        if(message!=0){
+            val msg=context.resources.getString(message)
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        }
+
     }
 }
 

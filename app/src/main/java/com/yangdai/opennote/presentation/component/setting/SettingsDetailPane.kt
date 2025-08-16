@@ -166,7 +166,8 @@ fun SettingsDetailPane(
                 }
 
                 2 -> {
-                    CloudPane()
+//                    CloudPane()
+                    WebDavPane(sharedViewModel = sharedViewModel)
                 }
 
                 3 -> {
@@ -191,6 +192,9 @@ fun SettingsDetailPane(
 
                 8 -> {
                     WidgetPane()
+                }
+                9->{
+                    LanguagePane()
                 }
             }
         }
