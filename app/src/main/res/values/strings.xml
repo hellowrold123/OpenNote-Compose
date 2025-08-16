@@ -210,4 +210,30 @@
     <string name="important_alert">Important Alert</string>
     <string name="tip_alert">Tip Alert</string>
     <string name="note_alert">Note Alert</string>
+
+    <string name="show_tag">Show</string>
+    <string name="hide_tag">Hide</string>
+    <string name="select_tag_title">Show or Hide Tags</string>
+    <string name="mark_note">Mark Note</string>
+    <string name="add_note">Mark Note</string>
+    <string name="select_language">Select Language</string>
+    <string name="system_language">System Language</string>
+    <string name="add_tag_label">Add Tag</string>
+    <string name="toast_msg1">Select at least one</string>
+    <string name="toast_msg2">Must select one</string>
+    <string name="tag_label">Tag</string>
+    <string name="max_tag_title">Tag Limit</string> <!-- 技术场景通用术语 -->
+    <string name="max_tag_desc">Maximum number of tags per file</string> <!-- 精确描述功能限制 -->
+    <string name="max_tag_prompt">Reached maximum tag limit or tag already exists</string>
+    <string name="data_choice">Select file format</string> <!-- "Select" 强调操作指令 -->
+    <string name="data_choice_encrypt">Encrypt</string> <!-- 动词形式表操作行为 -->
+    <string name="data_choice_noencrypt">Do not encrypt</string> <!-- 完整否定式 -->
+    <string name="webdav_title">WebDAV Authorization</string> <!-- "Authorization"为技术授权术语 -->
+    <string name="webdav_linkurl">Server Address</string> <!-- 统一使用"Server"而非"Host" -->
+    <string name="webdav_username">Username</string> <!-- 保持全称规范 -->
+    <string name="webdav_password">Password</string> <!-- 密码字段通用术语 -->
+    <string name="webdav_upload_title">Upload</string> <!-- 动作性标题 -->
+    <string name="webdav_upload_desc">Upload all data to WebDav</string> <!-- 明确动作目标 -->
+    <string name="webdav_download_title">Download</string>
+    <string name="webdav_download_desc">Downloads only the latest uploaded file</string> <!-- "the latest"强调唯一性 -->
 </resources>

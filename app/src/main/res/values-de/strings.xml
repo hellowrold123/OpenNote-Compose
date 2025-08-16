@@ -208,4 +208,30 @@
     <string name="display_style">Anzeigestil</string>
     <string name="line_numbers">Zeilennummern</string>
     <string name="sample_note">Beispielnotiz</string>
+
+    <string name="show_tag">Anzeigen</string>
+    <string name="hide_tag">Ausblenden</string>
+    <string name="select_tag_title">Tags anzeigen oder ausblenden</string>
+    <string name="mark_note">Notiz markieren</string>
+    <string name="add_note">Notiz markieren</string>
+    <string name="select_language">Sprache auswählen</string>
+    <string name="system_language">Systemsprache</string>
+    <string name="add_tag_label">Tag hinzufügen</string>
+    <string name="toast_msg1">Mindestens einen auswählen</string>
+    <string name="toast_msg2">Ein Auswahl ist erforderlich</string>
+    <string name="tag_label">Label</string> <!-- 德语中 "Tag" 意为"白天"，标签需用 "Label" [9,10](@ref) -->
+    <string name="max_tag_title">Tag-Limit</string> <!-- 避免直译"Tag"(白天) -->
+    <string name="max_tag_desc">Maximale Anzahl von Tags pro Datei</string> <!-- "Datei"特指计算机文件 -->
+    <string name="max_tag_prompt">Maximale Label-Anzahl erreicht oder Label existiert bereits</string>
+    <string name="data_choice">Dateiformat auswählen</string> <!-- "auswählen" 表主动选择 -->
+    <string name="data_choice_encrypt">Verschlüsseln</string> <!-- 动词原形 -->
+    <string name="data_choice_noencrypt">Nicht verschlüsseln</string> <!-- "Nicht" 明确否定 -->
+    <string name="webdav_title">WebDAV-Autorisierung</string> <!-- 复合词结构 -->
+    <string name="webdav_linkurl">Serveradresse</string> <!-- "Server"直接保留英文术语 -->
+    <string name="webdav_username">Benutzername</string> <!-- 完整复合词 -->
+    <string name="webdav_password">Passwort</string> <!-- 密码标准译法 -->
+    <string name="webdav_upload_title">Hochladen</string> <!-- 动词名词化 -->
+    <string name="webdav_upload_desc">Alle Daten zu WebDav hochladen</string> <!-- "zu"表示方向 -->
+    <string name="webdav_download_title">Herunterladen</string>
+    <string name="webdav_download_desc">Lädt nur die neueste hochgeladene Datei herunter</string> <!-- "neueste"表最高级 -->
 </resources>

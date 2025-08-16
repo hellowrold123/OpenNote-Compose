@@ -208,4 +208,31 @@
     <string name="display_style">展示风格</string>
     <string name="line_numbers">行号</string>
     <string name="sample_note">示例笔记</string>
+
+    <string name="show_tag">显示</string>
+    <string name="hide_tag">隐藏</string>
+    <string name="select_tag_title">显示/隐藏标签</string>
+    <string name="mark_note">添加标签</string>
+    <string name="add_note">添加标签</string>
+    <string name="select_language">选择语言</string>
+    <string name="system_language">系统语言</string>
+    <string name="add_tag_label">添加标签</string>
+    <string name="toast_msg1">至少选择一个</string>
+    <string name="toast_msg2">必须选择一个</string>
+    <string name="tag_label">标签</string>
+    <string name="max_tag_title">标签数量</string>
+    <string name="max_tag_desc">单个文件可以设置的最大标签数量</string>
+    <string name="max_tag_prompt">已达到设置的标签数量或者标签已存在</string>
+    <string name="data_choice">选择文件格式</string>
+    <string name="data_choice_encrypt">加密</string>
+    <string name="data_choice_noencrypt">不加密</string>
+    <string name="webdav_title">WebDav授权</string>
+    <string name="webdav_linkurl">服务器地址</string>
+    <string name="webdav_username">用户名</string>
+    <string name="webdav_password">密码</string>
+
+    <string name="webdav_upload_title">上传</string>
+    <string name="webdav_upload_desc">所有数据上传到WebDav</string>
+    <string name="webdav_download_title">下载</string>
+    <string name="webdav_download_desc">只会下载最新的上传文件</string>
 </resources>
