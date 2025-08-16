@@ -21,3 +21,7 @@
 #-renamesourcefileattribute SourceFile
 
 -keep @kotlinx.serialization.Serializable class * {*;}
+-keep class org.xmlpull.v1.** { *; }
+-dontwarn org.xmlpull.v1.**
+-dontwarn android.content.res.XmlResourceParser
+-ignorewarnings

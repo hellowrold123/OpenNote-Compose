@@ -2,6 +2,10 @@
 
 pluginManagement {
     repositories {
+        maven(url = "https://maven.aliyun.com/repository/google")
+        maven(url = "https://maven.aliyun.com/repository/central")
+        maven(url = "https://maven.aliyun.com/repository/gradle-plugin")
+        maven (url="https://mirrors.huaweicloud.com/repository/maven/")
         google {
             content {
                 includeGroupByRegex("com\\.android.*")
@@ -12,14 +16,21 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
     }
+
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
+//        maven(url = "https://maven.aliyun.com/repository/google")
+//        maven(url = "https://maven.aliyun.com/repository/central")
+        maven (url="https://mirrors.huaweicloud.com/repository/maven/")
+        maven("https://jitpack.io")
         google()
         mavenCentral()
     }
+
 }
+
 
 rootProject.name = "OpenNote"
 include(":app")

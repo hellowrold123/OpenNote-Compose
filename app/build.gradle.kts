@@ -146,7 +146,9 @@ dependencies {
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.appcompat)
-
+    //webdav
+    implementation("com.github.thegrizzlylabs:sardine-android:0.8")
+    implementation("com.squareup.okhttp3:okhttp:4.9.0")
     // For Glance support
     implementation(libs.androidx.glance)
     // For AppWidgets support
